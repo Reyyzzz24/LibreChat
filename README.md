@@ -51,6 +51,12 @@
   </a>
 </p>
 
+<p align="center">
+  <img src="docs/landingpage.png" alt="Eprisi chat interface" width="800">
+</p>
+<p align="center">
+  <img src="docs/login.png" alt="Eprisi login page" width="300">
+</p>
 
 # ✨ Features
 
