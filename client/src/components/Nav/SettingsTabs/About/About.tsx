@@ -23,11 +23,12 @@ function formatBuildDate(raw: string | null | undefined): string {
 }
 
 function buildDiagnosticsBlob(
+  appTitle: string,
   version: string,
   buildInfo: TStartupConfig['buildInfo'] | undefined,
 ): string {
   const lines: string[] = [
-    `LibreChat version: ${version}`,
+    `${appTitle} version: ${version}`,
     `Commit: ${buildInfo?.commit ?? UNKNOWN_PLACEHOLDER}`,
     `Branch: ${buildInfo?.branch ?? UNKNOWN_PLACEHOLDER}`,
     `Build date: ${formatBuildDate(buildInfo?.buildDate)}`,
@@ -54,9 +55,11 @@ function About() {
   const buildInfo = startupConfig?.buildInfo;
   const version: string = Constants.VERSION;
 
+  const appTitle = startupConfig?.appTitle ?? 'Eprisi';
+
   const diagnosticsBlob = useMemo(
-    () => buildDiagnosticsBlob(version, buildInfo),
-    [version, buildInfo],
+    () => buildDiagnosticsBlob(appTitle, version, buildInfo),
+    [appTitle, version, buildInfo],
   );
 
   useEffect(
