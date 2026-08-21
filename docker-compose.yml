@@ -7,26 +7,28 @@ services:
     ports:
       - "${PORT}:${PORT}"
     depends_on:
-      - mongodb
       - rag_api
     image: registry.librechat.ai/danny-avila/librechat-dev:latest
     restart: always
     user: "${UID}:${GID}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - dokploy-network
     environment:
       - HOST=0.0.0.0
-      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - MONGO_URI=${MONGO_URI}
       - MEILI_HOST=http://meilisearch:7700
       - RAG_PORT=${RAG_PORT:-8000}
       - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
       - PROXY=${PROXY:-}
       - HTTP_PROXY=${HTTP_PROXY:-}
       - HTTPS_PROXY=${HTTPS_PROXY:-}
-      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,::1},${no_proxy:-},mongodb,chat-mongodb,meilisearch,chat-meilisearch,rag_api,vectordb,host.docker.internal
+      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,::1},${no_proxy:-},meilisearch,chat-meilisearch,rag_api,host.docker.internal
       - http_proxy=${http_proxy:-}
       - https_proxy=${https_proxy:-}
-      - no_proxy=${no_proxy:-localhost,127.0.0.1,::1},${NO_PROXY:-},mongodb,chat-mongodb,meilisearch,chat-meilisearch,rag_api,vectordb,host.docker.internal
+      - no_proxy=${no_proxy:-localhost,127.0.0.1,::1},${NO_PROXY:-},meilisearch,chat-meilisearch,rag_api,host.docker.internal
     volumes:
       - type: bind
         source: ./.env
@@ -51,14 +53,6 @@ services:
       - API_SERVER_URL=http://api:${PORT:-3080}
       - VITE_API_BASE_URL=${DOMAIN_CLIENT:-http://localhost:3080}
       - SESSION_COOKIE_SECURE=${ADMIN_PANEL_SESSION_COOKIE_SECURE:-false}
-  mongodb:
-    container_name: chat-mongodb
-    image: mongo:8.0.20
-    restart: always
-    user: "${UID}:${GID}"
-    volumes:
-      - ./data-node:/data/db
-    command: mongod --noauth
   meilisearch:
     container_name: chat-meilisearch
     image: getmeili/meilisearch:v1.35.1
@@ -70,27 +64,23 @@ services:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
     volumes:
       - ./meili_data_v1.35.1:/meili_data
-  vectordb:
-    container_name: vectordb
-    image: pgvector/pgvector:0.8.0-pg15-trixie
-    environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-    restart: always
-    volumes:
-      - pgdata2:/var/lib/postgresql/data
   rag_api:
     container_name: rag_api
     image: registry.librechat.ai/danny-avila/librechat-rag-api-dev-lite:latest
+    networks:
+      - default
+      - dokploy-network
     environment:
-      - DB_HOST=vectordb
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - RAG_PORT=${RAG_PORT:-8000}
     restart: always
-    depends_on:
-      - vectordb
     env_file:
       - .env
 
-volumes:
-  pgdata2:
+networks:
+  dokploy-network:
+    external: true
